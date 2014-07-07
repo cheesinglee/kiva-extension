@@ -1,0 +1,17 @@
+{
+  "manifest_version": 2,
+
+  "name": "Kiva Predictor",
+  "description": "Predict the success of Kiva loans using BigML models",
+  "version": "0.1",
+
+  "content_scripts": [
+    {
+      "matches": ["http://www.kiva.org/lend*"],
+      "js":["jquery-2.1.1.min.js","kivapredict.js"],
+      "css":["kivapredict.css"]
+    }
+   ],
+   
+   "web_accessible_resources":["images/*.png"]
+}
