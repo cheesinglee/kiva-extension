@@ -1,5 +1,7 @@
+// check if a loan id is at the end of the url
 var re = /lend\/(\d+)/ ;
 var result = re.exec(window.location.href) ;
+
 if (result !== null){
   // individual loan page
   var loan_id = result[1] ;
@@ -16,11 +18,20 @@ if (result !== null){
 }
 
 function makeStatusIndicator(loan_id){
-  var url = "http://api.kivaws.org/v1/loans/" + loan_id + ".json" ;
+  // this function executes the Kiva API query for a particular loan id, feeds the result through
+  // the actionable model, and returns a green light or red light icon depending on the result.
+  
+  // create DOM object for icon
   var img = $('<img class="indicator">') ;
+  
+  // Kiva API call
+  var url = "http://api.kivaws.org/v1/loans/" + loan_id + ".json" ;
   $.get(url,function(data){
+    // pass response to actionable model
     var data = data.loans[0] ;
     var status = predictStatus(data.funded_amount,data.location.country,data.loan_amount,data.sector) ;
+    
+    // create the indicator
     if (status == "paid"){
       img.attr("src",chrome.extension.getURL("images/green_light.png")) ;
     }else{
