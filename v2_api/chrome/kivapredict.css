@@ -1,0 +1,59 @@
+
+
+img.indicator{
+  width:20px !important;
+  height:20px !important;
+}
+
+img.indicator-small{
+  width:16px !important;
+  height:16px !important;
+}
+
+.tooltip{
+  display:none ;
+}
+
+.tooltip:hover{
+  display:block;
+}
+
+div.confidence-meter{
+  background-color:lightgray;
+  overflow:hidden;
+}
+
+span.label{
+  float:left;
+}
+
+div.confidence-meter, div.confidence-bar{
+  height:8px;
+  border-radius:4px;
+}
+
+div.confidence-high{
+  background-color:green;
+}
+
+div.confidence-mid{
+  background-color:yellow;
+}
+
+div.confidence-low{
+  background-color:red;
+}
+
+div.prediction-container{
+  border:1px solid lightgray;
+  padding:5px;
+  margin:10px 0px;
+}
+
+div.small-container{
+  font-size:x-small;
+}
+
+.small-container span.label{
+  float:none;
+}

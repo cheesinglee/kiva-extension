@@ -1,0 +1,12 @@
+img.indicator{
+  width:20px !important;
+  height:20px !important;
+}
+
+.tooltip{
+  display:none ;
+}
+
+.tooltip:hover{
+  display:block;
+}

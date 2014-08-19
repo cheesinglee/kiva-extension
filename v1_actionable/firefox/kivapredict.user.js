@@ -1,4 +1,23 @@
-// check if a loan id is at the end of the url
+// ==UserScript==
+// @name          	Kiva Predictor
+// @version		0.1
+// @description   	Predict Kiva loan status using a BigML actionable model
+// @include       	http://www.kiva.org/lend*
+// @require       	http://code.jquery.com/jquery-2.1.1.min.js
+// @resource		kivapredict_style kivapredict.css
+// @resource      	green_light http://png-2.findicons.com/files/icons/1933/symbols/24/green_light.png
+// @resource      	red_light http://png-3.findicons.com/files/icons/1933/symbols/24/red_light.png
+// @icon          	http://www.example.net/icon.png
+// @grant	  	GM_getResourceURL
+// @grant		GM_getResourceText
+// @grant		GM_setValue
+// @grant		GM_getValue
+// @grant		GM_addStyle
+// ==/UserScript==
+
+GM_addStyle(GM_getResourceText("kivapredict_style"))
+
+// check if a loan ID is at the end of the url
 var re = /lend\/(\d+)/ ;
 var result = re.exec(window.location.href) ;
 
@@ -31,11 +50,11 @@ function makeStatusIndicator(loan_id){
     var data = data.loans[0] ;
     var status = predictStatus(data.funded_amount,data.location.country,data.loan_amount,data.sector) ;
     
-    // create the indicator
+    // create the indicator. use chrome.extension.getURL to resolve path to image resource
     if (status == "paid"){
-      img.attr("src",chrome.extension.getURL("images/green_light.png")) ;
+      img.attr("src",GM_getResourceURL("green_light")) ;
     }else{
-      img.attr("src",chrome.extension.getURL("images/red_light.png")) ;
+      img.attr("src",GM_getResourceURL("red_light")) ;
     }
     img.attr("title","The predicted status for this loan is: " + status.toUpperCase()) ;
   })
@@ -1676,4 +1695,4 @@ function predictStatus(fundedAmount, country, loanAmount, sector, fundedDateDayO
         }
     }
     return null;
-}
+} 
