@@ -12,7 +12,6 @@ import cStringIO
 import codecs
 import csv
 import os
-import sys
 from time import sleep
 from zipfile import ZipFile
 from tempfile import NamedTemporaryFile,mkdtemp 
@@ -90,31 +89,27 @@ def prune_fields(row):
         if k not in KEYS:
             del(flattened[k])
     return flattened
-#    for field in PRUNE_FIELDS:
-#        try:
-#            del(row[field])
-#        except: 
-#            pass
-#    return flatten(row)
+    
+def make_ds(filename):
+    print('create source')
+    src = api.create_source(filename)
+    api.ok(src)
+    api.update_source(src,{'fields':{'000004':{'optype':'numeric'}}})
+    print('\ncreate dataset')
+    ds = api.create_dataset(src,{'name':'kiva-data'})
+    api.ok(ds)
+    os.remove(filename)
+    
 
-
-api = BigML()
-
-datasets = api.list_datasets("name=kiva-data;order_by=created")['objects']
-#if True:
-if len(datasets) == 0:
-    # no pre-existing data, create from Kiva snapshot
-    # download kiva snapshot to tmp file
-#    print('downloading snapshot file')
-#    (filename,headers) = urlretrieve(KIVA_SNAPSHOT_URL,'snapshot.zip')
-    filename = '../data/kiva_ds_json.zip'
+def make_ds_from_snapshot():
+    print('downloading snapshot file')
+    (filename,headers) = urlretrieve(KIVA_SNAPSHOT_URL,'snapshot.zip')
     z = ZipFile(filename)
     members = filter(lambda x : x[:6] == 'loans/', z.namelist())
     n = len(members)
     start = 0
     end = 100
     tmpdir = mkdtemp()
-    keys = []
     with NamedTemporaryFile(suffix='.csv',delete=False) as outfile:
         writer = UnicodeWriter(outfile)
         while end < n:
@@ -138,23 +133,11 @@ if len(datasets) == 0:
                     writer.writerow(values)
             start = end
             end = min(start+100,n)
-    print('create source')
-    src = api.create_source(outfile.name)
-    api.ok(src)
-    api.update_source(src,{'fields':{'000004':{'optype':'numeric'}}})
-    print('\ncreate dataset')
-    ds = api.create_dataset(src,{'name':'kiva-data'})
-    api.ok(ds)
-#    os.remove(outfile.name)
-else:
-    # use kiva api to grab new loan data
-
-    # find date of most recent BigML dataset
-#    last_date = dateutil.parser.parse(datasets[0]['created']).replace(tzinfo=dateutil.tz.tzutc())
-    last_date = dateutil.parser.parse('2014-07-22').replace(tzinfo=dateutil.tz.tzutc())
+    make_ds(outfile.name)
+    
+def make_ds_from_api(last_date):
     print('grabbing Kiva loan data from %s and later' % last_date)    
-    
-    
+        
     # get all kiva loans which have ended since that date
     url = 'http://api.kivaws.org/v1/loans/search.json?%s'
     url_details = 'http://api.kivaws.org/v1/loans/%d.json'
@@ -187,23 +170,34 @@ else:
             writer.writerow(KEYS)
         for row in data:
             values = [row[k] for k in KEYS]
-            writer.writerow(values)    
-    print('creating source')
-    src = api.create_source(tmpfile.name)
-    api.ok(src)
-    print('creating dataset')
-    ds = api.create_dataset(src,{'name':'kiva-data'})
-    api.ok(ds)
-    os.remove(tmpfile.name)
+            writer.writerow(values)  
+    make_ds(tmpfile.name)
+
+if __name__ == '__main__':
+    api = BigML()
     
-
-print('building model')
-datasets = api.list_datasets("name=kiva-data;order_by=created")['objects']
-model = api.create_model([obj['resource'] for obj in datasets],
-                         {'name':'kiva-model',
-                          'objective_field':OBJECTIVE_FIELD_ID,
-                          'input_fields':INPUT_FIELD_IDS,
-                          'excluded_fields':EXCLUDED_FIELD_IDS,
-                          'balance_objective':True})
-         
-
+    datasets = api.list_datasets("name=kiva-data;order_by=created")['objects']
+    if len(datasets) == 0:
+        # no pre-existing data, create from Kiva snapshot
+        # download kiva snapshot to tmp file
+        make_ds_from_snapshot()
+    else:
+        # find date of most recent BigML dataset
+        last_date = dateutil.parser.parse(datasets[0]['created']).replace(tzinfo=dateutil.tz.tzutc())
+        
+        # use kiva api to grab new loan data        
+        make_ds_from_api(last_date)
+        
+    
+    print('building model')
+    datasets = api.list_datasets("name=kiva-data;order_by=created")['objects']
+    model = api.create_model([obj['resource'] for obj in datasets],
+                             {'name':'kiva-model',
+                              'objective_field':OBJECTIVE_FIELD_ID,
+                              'input_fields':INPUT_FIELD_IDS,
+                              'excluded_fields':EXCLUDED_FIELD_IDS,
+                              'balance_objective':True})
+                              
+    print('Done!')                              
+             
+    
