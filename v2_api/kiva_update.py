@@ -40,8 +40,9 @@ INPUT_FIELD_IDS = ['000000',  # sector
                    '000002-1',
                    '000002-2',
                    '000002-3',
+                   '000002-4'
                    # posted-date.{year,month,day-of-month,day-of-week,'hour'}
-                   '000002-4']
+                   ]
 EXCLUDED_FIELD_IDS = ['000002', '000002-5', '000002-6']
 OBJECTIVE_FIELD_ID = '000007'  # status
 
@@ -129,7 +130,6 @@ def make_ds_from_snapshot():
     print 'downloading snapshot file'
     (filename, _) = urlretrieve(KIVA_SNAPSHOT_URL, 'snapshot.zip')
     zipfile = ZipFile(filename)
-#    members = filter(lambda x: x[:6] == 'loans/', z.namelist())
     members = [name for name in zipfile.namelist() if name[:6] == 'loans/']
     n_members = len(members)
     start = 0
@@ -137,6 +137,7 @@ def make_ds_from_snapshot():
     tmpdir = mkdtemp()
     with NamedTemporaryFile(suffix='.csv', delete=False) as outfile:
         writer = UnicodeWriter(outfile)
+        # process the files in batches so we don't run out of space in tmpfs
         while end < n_members:
             print('extracting %s...%s to %s' %
                   (members[start], members[end], tmpdir))
